@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>LKW Leitstand – Desktop + Mobile</title>
+
+<style>
+:root{
+  --brand:#ff6600;
+  --bg:#f4f6f8;
+  --card:#ffffff;
+  --border:#e3e6ea;
+  --radius:16px;
+
+  --frei:#22c55e;
+  --laden:#f97316;
+  --entladen:#2563eb;
+  --beide:#ef4444;
+
+  --ink:#111827;
+  --muted:#6b7280;
+
+  --shadow:0 10px 26px rgba(0,0,0,.12);
+
+  /* Mobile */
+  --topbarH: 56px;
+  --tabbarH: 64px;
+
+  /* JS setzt das stabil für iOS */
+  --appH: 100dvh;
+}
+
+*{box-sizing:border-box}
+html, body{height:100%; margin:0;}
+body{
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:var(--bg);
+  color:var(--ink);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+
+.app{ display:none; }
+
+/* Login */
+#loginOverlay{
+  position:fixed; inset:0;
+  display:flex; justify-content:center; align-items:center;
+  background:rgba(255,255,255,.95);
+  z-index:9999;
+}
+
+/* Desktop layout */
+.app{
+  height:100vh;
+  padding:12px;
+  gap:12px;
+  display:grid;
+  grid-template-columns: 360px 1fr 360px;
+}
+
+/* Sidebars + main */
+#leftbar, #rightbar{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:16px;
+  border:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+main{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:16px;
+  overflow:auto;
+  border:1px solid var(--border);
+  min-width:0;
+}
+
+/* Common UI */
+#clockBox{
+  display:flex; flex-direction:column; gap:2px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#f9fafb;
+  border:1px solid var(--border);
+}
+#clockTime, #clockTimeDesktop{ font-weight:900; font-size:18px; letter-spacing:.5px; }
+#clockDate, #clockDateDesktop{ font-size:12px; color:var(--muted); }
+
+#roleInfo{
+  padding:10px;border-radius:12px;background:#f9fafb;border:1px solid var(--border);
+  font-size:13px;line-height:1.35;
+}
+
+.smallBtn{
+  padding:10px 12px;border:none;border-radius:999px;cursor:pointer;font-weight:900;
+}
+.smallBtn:disabled{opacity:.45;cursor:not-allowed}
+
+#undoBtnDesktop{
+  padding:10px;border:none;border-radius:999px;cursor:pointer;
+  font-weight:900;background:var(--ink);color:#fff;
+}
+#undoBtnDesktop:disabled{opacity:.45;cursor:not-allowed}
+
+#tabs{display:flex;flex-direction:column;gap:6px}
+#tabs button{
+  width:100%;padding:10px;border:none;border-radius:999px;
+  background:#eef2f7;font-weight:800;text-align:left;cursor:pointer
+}
+#tabs button.active{background:var(--brand);color:#fff}
+
+#logoutBtn{
+  margin-top:auto;
+  padding:10px;border-radius:999px;border:1px solid var(--border);
+  background:#fff;cursor:pointer;font-weight:800
+}
+
+/* main tabs */
+.tab{display:none}
+.tab.active{display:block}
+
+/* Grid */
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.controls label{font-size:13px;display:flex;gap:6px;align-items:center}
+.controls input{
+  width:84px;padding:8px;border-radius:10px;border:1px solid var(--border);
+}
+.controls button{
+  padding:9px 12px;border:none;border-radius:999px;background:var(--brand);
+  color:#fff;font-weight:900;cursor:pointer
+}
+.controls button:disabled{opacity:.45;cursor:not-allowed}
+
+#grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.lkw{width:150px}
+.lkw-box{
+  height:92px;border-radius:14px;color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;text-align:center;user-select:none;
+  box-shadow:0 8px 18px rgba(0,0,0,.12);
+}
+.lkw-id{font-weight:900}
+.lkw-status{font-size:12px;margin-top:4px}
+.lkw-buttons{display:flex;gap:6px;margin-top:6px}
+.lkw-buttons button{
+  flex:1;border:none;border-radius:999px;padding:7px;cursor:pointer;background:#eef2ff
+}
+.lkw-buttons button:disabled{opacity:.45;cursor:not-allowed}
+
+.card{
+  padding:12px;border:1px solid var(--border);border-radius:14px;background:#f9fafb;margin-bottom:10px
+}
+.muted{color:var(--muted);font-size:12px}
+
+/* History */
+#historyList{display:flex;flex-direction:column;gap:8px}
+.historyItem{
+  padding:10px;border:1px solid var(--border);border-radius:14px;background:#f9fafb;
+  font-size:13px;line-height:1.35
+}
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:999px;background:var(--ink);color:#fff;
+  font-size:11px;font-weight:900;margin-right:6px
+}
+
+/* Dashboard bars */
+.barBlock{margin:14px 0}
+.barTitle{font-weight:900;margin-bottom:8px}
+.barRow{display:flex;gap:10px;align-items:center;margin:10px 0}
+.barName{width:150px;font-size:13px;color:var(--ink);font-weight:800}
+.barTrack{
+  flex:1;height:26px;background:#eef2f7;border-radius:999px;overflow:hidden;border:1px solid var(--border)
+}
+.barFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  padding-right:10px;
+  color:#fff;
+  font-weight:900;
+  font-size:12px;
+  white-space:nowrap;
+  transition:width .25s ease;
+}
+.barRight{width:80px;text-align:right;font-weight:900;color:var(--ink)}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--border);font-weight:900}
+
+/* Rightbar widgets */
+.panelTitle{font-weight:900;font-size:14px;margin:0}
+#trafficLight{
+  display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;
+  background:#f9fafb;border:1px solid var(--border);
+}
+#light{width:24px;height:24px;border-radius:50%}
+.green{background:#22c55e}
+.yellow{background:#facc15}
+.red{background:#ef4444}
+#lightText{font-weight:900;font-size:13px}
+.kpi{
+  background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px
+}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .value{font-size:22px;font-weight:900;margin-top:4px}
+.queueRow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.queueRow .label{flex:1;font-size:13px}
+.queueRow .count{width:34px;text-align:center;font-weight:900}
+.queueRow button{
+  width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;font-weight:900
+}
+.plus{background:#dcfce7}
+.minus{background:#fee2e2}
+.queueRow button:disabled{opacity:.45;cursor:not-allowed}
+.threshGrid{display:flex; gap:10px; flex-wrap:wrap;}
+.threshGrid label{display:flex; flex-direction:column; gap:6px; font-size:12px; color:var(--muted);}
+.threshGrid input{width:120px;padding:8px;border-radius:10px;border:1px solid var(--border);font-weight:900;color:var(--ink);}
+
+/* ---------- MOBILE ---------- */
+#mobileTopbar, #mobileTabbar, #drawerBackdrop, #leftDrawer, #rightDrawer{ display:none; }
+
+@media(max-width:900px){
+  /* WICHTIG: Mobile App ist flex-column + echte Höhe */
+  .app{
+    display:flex;
+    flex-direction:column;
+    height: var(--appH);
+    min-height: var(--appH);
+    padding:0;
+    overflow:hidden;
+  }
+
+  #leftbar, #rightbar{ display:none; }
+
+  #mobileTopbar{
+    display:flex;
+    height:var(--topbarH);
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    background:var(--card);
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:50;
+    flex:0 0 auto;
+  }
+  #mobileTopbar .title{
+    font-weight:950;
+    display:flex;
+    flex-direction:column;
+    line-height:1.1;
+  }
+  #mobileTopbar .title small{ color:var(--muted); font-weight:800; font-size:11px; }
+  #mobileTopbar .actions{ display:flex; gap:8px; }
+  #mobileTopbar button{
+    border:none;
+    border-radius:999px;
+    padding:10px 12px;
+    font-weight:900;
+    background:#eef2f7;
+  }
+  #mobileTopbar button.primary{ background:var(--brand); color:#fff; }
+
+  /* MAIN nimmt den kompletten Platz zwischen Topbar & Tabbar */
+  main{
+    flex: 1 1 auto;
+    border-radius:0;
+    border:none;
+    padding:14px;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
+
+    /* WICHTIG: Inhalt nicht hinter Tabbar */
+    padding-bottom: calc(var(--tabbarH) + env(safe-area-inset-bottom) + 14px);
+  }
+
+  /* Tabbar: ganz unten, safe-area berücksichtigt */
+  #mobileTabbar{
+    display:flex;
+    position: fixed;
+    left:0; right:0; bottom:0;
+
+    height: var(--tabbarH);
+    padding: 8px;
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+
+    background:var(--card);
+    border-top:1px solid var(--border);
+    gap:8px;
+    z-index:999;
+  }
+  #mobileTabbar button{
+    flex:1;
+    border:none;
+    border-radius:14px;
+    background:#eef2f7;
+    font-weight:900;
+    padding:10px 6px;
+    font-size:12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    line-height:1.1;
+  }
+  #mobileTabbar button.active{ background:var(--brand); color:#fff; }
+
+  #drawerBackdrop{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(0,0,0,.35);
+    z-index:1000;
+  }
+  #drawerBackdrop.show{ display:block; }
+
+  .drawer{
+    display:block;
+    position:fixed;
+    top:0; bottom:0;
+    width:min(92vw, 420px);
+    background:var(--card);
+    border:1px solid var(--border);
+    box-shadow:var(--shadow);
+    z-index:1200;
+    padding:16px;
+    overflow:auto;
+    transform:translateX(-110%);
+    transition:transform .25s ease;
+    -webkit-overflow-scrolling:touch;
+  }
+  .drawer.right{ right:0; left:auto; transform:translateX(110%); }
+  .drawer.open{ transform:translateX(0); }
+
+  /* mobile grid */
+  .lkw{ width:calc(50% - 6px); }
+  .lkw-box{ height:86px; }
+  .barName{ width:120px; }
+}
+@media(max-width:420px){
+  .lkw{ width:100%; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginOverlay">
+  <div style="width:360px;max-width:92vw;padding:18px;border-radius:16px;background:#fff;border:1px solid var(--border);display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)">
+    <h3 style="margin:0">Anmelden</h3>
+    <select id="loginUser" style="padding:10px;border-radius:12px;border:1px solid var(--border)"></select>
+    <input id="loginPw" type="password" placeholder="Passwort" style="padding:10px;border-radius:12px;border:1px solid var(--border)"/>
+    <button id="loginBtn" type="button" style="padding:10px;border:none;border-radius:999px;background:var(--brand);color:#fff;font-weight:900">Login</button>
+    <small class="muted">Login: <b>admin</b> / <b>Admin1234</b></small>
+  </div>
+</div>
+
+<!-- MOBILE TOPBAR -->
+<div id="mobileTopbar">
+  <div class="title">
+    <span>LKW Leitstand</span>
+    <small id="mobileSubtitle">nicht angemeldet</small>
+  </div>
+  <div class="actions">
+    <button id="openMenuBtn" type="button">☰ Menü</button>
+    <button id="openQueueBtn" type="button" class="primary">🚦 Queue</button>
+  </div>
+</div>
+
+<div id="drawerBackdrop"></div>
+
+<!-- LEFT DRAWER -->
+<aside id="leftDrawer" class="drawer">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+    <strong>Menü</strong>
+    <button id="closeMenuBtn" class="smallBtn" type="button" style="background:#eef2f7">✕</button>
+  </div>
+
+  <div id="clockBox">
+    <div id="clockTime">--:--:--</div>
+    <div id="clockDate">--.--.----</div>
+  </div>
+
+  <div id="roleInfoMobile" style="padding:10px;border-radius:12px;background:#f9fafb;border:1px solid var(--border);font-size:13px;line-height:1.35;">
+    Nicht angemeldet
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+    <button id="shiftStartBtn" type="button" class="smallBtn" style="background:var(--brand);color:#fff">🟧 Schichtstart</button>
+    <button id="undoBtn" type="button" disabled class="smallBtn" style="background:#111827;color:#fff">↩ Undo</button>
+  </div>
+
+  <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+    <button class="drawerTab" data-tab="dashboard" style="width:100%;padding:10px;border:none;border-radius:999px;background:#eef2f7;font-weight:900;text-align:left">📈 Dashboard</button>
+    <button class="drawerTab" data-tab="raster" style="width:100%;padding:10px;border:none;border-radius:999px;background:#eef2f7;font-weight:900;text-align:left">🧩 Raster</button>
+    <button class="drawerTab" data-tab="history" style="width:100%;padding:10px;border:none;border-radius:999px;background:#eef2f7;font-weight:900;text-align:left">🧾 Verlauf</button>
+    <button class="drawerTab" data-tab="stats" style="width:100%;padding:10px;border:none;border-radius:999px;background:#eef2f7;font-weight:900;text-align:left">📊 Statistik</button>
+    <button class="drawerTab" data-tab="users" style="width:100%;padding:10px;border:none;border-radius:999px;background:#eef2f7;font-weight:900;text-align:left">👤 Benutzer</button>
+  </div>
+
+  <button id="logoutBtnMobile" type="button" style="margin-top:16px;padding:10px;border-radius:999px;border:1px solid var(--border);background:#fff;font-weight:900">
+    Abmelden
+  </button>
+</aside>
+
+<!-- RIGHT DRAWER (Mobile Queue/Ampel) -->
+<aside id="rightDrawer" class="drawer right">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+    <strong>🚦 Ampel & Warteschlange</strong>
+    <button id="closeQueueBtn" class="smallBtn" type="button" style="background:#eef2f7">✕</button>
+  </div>
+  <div id="rightDrawerContent"></div>
+</aside>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- LEFT DESKTOP -->
+  <aside id="leftbar">
+    <div id="clockBox">
+      <div id="clockTimeDesktop">--:--:--</div>
+      <div id="clockDateDesktop">--.--.----</div>
+    </div>
+
+    <strong>LKW Leitstand</strong>
+    <div id="roleInfo">Nicht angemeldet</div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button id="shiftStartBtnDesktop" type="button" class="smallBtn" style="background:var(--brand);color:#fff">🟧 Schichtstart</button>
+      <button id="undoBtnDesktop" type="button" disabled>↩ Undo</button>
+    </div>
+
+    <div id="tabs">
+      <button class="active" data-tab="dashboard">📈 Dashboard</button>
+      <button data-tab="raster">🧩 Raster</button>
+      <button data-tab="history">🧾 Verlauf</button>
+      <button data-tab="stats">📊 Statistik</button>
+      <button data-tab="users">👤 Benutzer</button>
+    </div>
+
+    <button id="logoutBtn" type="button">Abmelden</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div id="dashboard" class="tab active">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <h2 style="margin:0">Dashboard</h2>
+        <button id="resetDashBtn" class="smallBtn" type="button" style="background:#111827;color:#fff">⟲ Reset Dashboard</button>
+      </div>
+
+      <div class="barBlock">
+        <div class="barTitle">Gesamtzeiten (ohne Frei) – live</div>
+
+        <div class="barRow">
+          <div class="barName">📦 Laden</div>
+          <div class="barTrack"><div id="barTLaden" class="barFill" style="background:var(--laden)">0s</div></div>
+          <div class="barRight" id="nTLaden">0s</div>
+        </div>
+
+        <div class="barRow">
+          <div class="barName">⬇ Abladen</div>
+          <div class="barTrack"><div id="barTEntladen" class="barFill" style="background:var(--entladen)">0s</div></div>
+          <div class="barRight" id="nTEntladen">0s</div>
+        </div>
+
+        <div class="barRow">
+          <div class="barName">🔄 Beides</div>
+          <div class="barTrack"><div id="barTBeide" class="barFill" style="background:var(--beide)">0s</div></div>
+          <div class="barRight" id="nTBeide">0s</div>
+        </div>
+
+        <div class="muted">Zeitbalken skaliert relativ zur größten der drei Zeiten.</div>
+      </div>
+    </div>
+
+    <div id="raster" class="tab">
+      <h2>Raster</h2>
+      <div class="controls">
+        <label>Zeilen <input id="rowsInput" type="number" min="1" max="20" value="4"></label>
+        <label>Spalten <input id="colsInput" type="number" min="1" max="20" value="6"></label>
+        <button id="applyGridBtn" type="button">Raster anwenden</button>
+      </div>
+      <div class="muted">Klick auf Kachel = <b>Frei</b>. Buttons: ⬇ Abladen, 📦 Laden, 🔄 Beides</div>
+      <div id="grid"></div>
+    </div>
+
+    <div id="history" class="tab">
+      <h2>Verlauf</h2>
+      <div class="muted">Neueste Aktionen oben.</div>
+      <div id="historyList" style="margin-top:12px;"></div>
+    </div>
+
+    <div id="stats" class="tab">
+      <h2>Statistik (Gesamt)</h2>
+      <div class="card">
+        <div>📦 Laden: <b id="tLaden">0s</b></div>
+        <div>⬇ Abladen: <b id="tEntladen">0s</b></div>
+        <div>🔄 Abladen/Laden: <b id="tBeide">0s</b></div>
+        <div class="muted" style="margin-top:8px;">Frei wird nicht gezählt.</div>
+      </div>
+    </div>
+
+    <div id="users" class="tab">
+      <h2>Benutzerverwaltung</h2>
+      <div id="usersHint" class="muted" style="margin-bottom:10px;"></div>
+
+      <div class="card">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="newUserName" placeholder="Name" style="flex:1;min-width:140px;padding:10px;border-radius:12px;border:1px solid var(--border)">
+          <input id="newUserPw" placeholder="Passwort" style="flex:1;min-width:140px;padding:10px;border-radius:12px;border:1px solid var(--border)">
+          <select id="newUserRole" style="padding:10px;border-radius:12px;border:1px solid var(--border)">
+            <option value="disponent">Disponent</option>
+            <option value="sicht">Sicht</option>
+          </select>
+        </div>
+        <button id="addUserBtn" type="button" style="margin-top:10px;padding:10px 14px;border:none;border-radius:999px;background:var(--brand);color:#fff;font-weight:900;">
+          Benutzer anlegen
+        </button>
+      </div>
+
+      <div id="userList" class="card"></div>
+    </div>
+  </main>
+
+  <!-- RIGHT DESKTOP -->
+  <aside id="rightbar">
+    <h3 class="panelTitle">🚦 Ampel & Warteschlange</h3>
+
+    <div id="trafficLight">
+      <div id="light" class="green"></div>
+      <div>
+        <div id="lightText">Warteschlange OK</div>
+        <div class="muted">Ampel = Summe Warteschlange</div>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Ampel-Schwellen (editierbar)</div>
+      <div class="threshGrid" style="margin-top:10px;">
+        <label>🟡 Gelb ab
+          <input id="qYellow" type="number" min="0">
+        </label>
+        <label>🔴 Rot ab
+          <input id="qRed" type="number" min="0">
+        </label>
+      </div>
+      <button id="saveThreshBtn" class="smallBtn" type="button" style="margin-top:10px;background:var(--brand);color:#fff">
+        Speichern
+      </button>
+      <div class="muted" style="margin-top:8px">Nur Admin/Disponent darf ändern.</div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Warteschlange Summe</div>
+      <div class="value"><span id="kpiQueueSum">0</span> <span class="pill" id="kpiAmpelState">OK</span></div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Peak (seit Reset/Login)</div>
+      <div class="value" id="kpiQueuePeak">0</div>
+    </div>
+
+    <div class="kpi">
+      <div class="label">Ampel-Zeit seit Reset/Login</div>
+      <div class="value" style="font-size:16px;line-height:1.4">
+        🟢 <span id="kpiTGreen">0s</span><br>
+        🟡 <span id="kpiTYellow">0s</span><br>
+        🔴 <span id="kpiTRed">0s</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin:0">
+      <h4 style="margin:0 0 10px;">🚧 Warteschlange</h4>
+
+      <div class="queueRow">
+        <div class="label">⬇ Abladen</div>
+        <button class="minus" id="decE" type="button">−</button>
+        <div class="count" id="cEntladen">0</div>
+        <button class="plus" id="incE" type="button">+</button>
+      </div>
+
+      <div class="queueRow">
+        <div class="label">📦 Laden</div>
+        <button class="minus" id="decL" type="button">−</button>
+        <div class="count" id="cLaden">0</div>
+        <button class="plus" id="incL" type="button">+</button>
+      </div>
+
+      <div class="queueRow" style="margin-bottom:0">
+        <div class="label">🔄 Beides</div>
+        <button class="minus" id="decB" type="button">−</button>
+        <div class="count" id="cBeide">0</div>
+        <button class="plus" id="incB" type="button">+</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- MOBILE TABBAR -->
+<div id="mobileTabbar">
+  <button class="mTab active" data-tab="dashboard">📈<span>Dash</span></button>
+  <button class="mTab" data-tab="raster">🧩<span>Raster</span></button>
+  <button class="mTab" data-tab="history">🧾<span>Verlauf</span></button>
+  <button class="mTab" data-tab="stats">📊<span>Stats</span></button>
+  <button class="mTab" data-tab="users">👤<span>User</span></button>
+</div>
+
+<script>
+(() => {
+  /* iOS/Android: echte Viewporthöhe setzen */
+  function setAppHeight(){
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--appH', h + 'px');
+  }
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize', setAppHeight);
+    window.visualViewport.addEventListener('scroll', setAppHeight);
+  }
+
+  // storage keys
+  const KEY_USERS = "lkw_users_final_v1";
+  const KEY_STATE = "lkw_state_final_v1";
+  const KEY_QUEUE = "lkw_queue_final_v1";
+  const KEY_THRESH = "lkw_thresh_final_v1";
+  const KEY_TOTALS = "lkw_totals_final_v1";
+  const KEY_LAST = "lkw_lastchange_final_v1";
+  const KEY_HISTORY = "lkw_history_final_v1";
+  const KEY_LAYOUT = "lkw_layout_final_v1";
+
+  const DEFAULT_USERS = [{ name:"admin", pw:"Admin1234", role:"admin" }];
+  const DEFAULT_THRESH = { qYellow: 4, qRed: 8 };
+  const DEFAULT_QUEUE = { laden:0, entladen:0, beide:0 };
+  const DEFAULT_TOTALS = { laden:0, entladen:0, beide:0 };
+  const DEFAULT_LAYOUT = { rows:4, cols:6 };
+
+  function load(key, fallback){
+    try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch{ return fallback; }
+  }
+  function save(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  function nowStr(){ return new Date().toLocaleString(); }
+  function fmtMs(ms){
+    const s = Math.floor(ms/1000);
+    const h = Math.floor(s/3600);
+    const m = Math.floor((s%3600)/60);
+    const sec = s%60;
+    if(h>0) return `${h}h ${m}m ${sec}s`;
+    if(m>0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+  }
+  function clampInt(v, min, max){
+    let n = parseInt(v, 10);
+    if(Number.isNaN(n)) n = min;
+    return Math.max(min, Math.min(max, n));
+  }
+  function $(id){ return document.getElementById(id); }
+
+  // state
+  let users = load(KEY_USERS, DEFAULT_USERS);
+  if(!Array.isArray(users) || users.length===0){ users = DEFAULT_USERS.slice(); save(KEY_USERS, users); }
+
+  let session = null;
+  let gridState = load(KEY_STATE, {});
+  let lastChange = load(KEY_LAST, {});
+  let totals = load(KEY_TOTALS, DEFAULT_TOTALS);
+  let queue = load(KEY_QUEUE, DEFAULT_QUEUE);
+  let thresh = load(KEY_THRESH, DEFAULT_THRESH);
+  let history = load(KEY_HISTORY, []);
+  let layout = load(KEY_LAYOUT, DEFAULT_LAYOUT);
+
+  let dash = {
+    startedAt: null,
+    queuePeak: 0,
+    ampel: { green:0, yellow:0, red:0 },
+    lastAmpel: { state:"green", at:null }
+  };
+
+  function canEdit(){ return session && (session.role==="admin" || session.role==="disponent"); }
+  function isAdmin(){ return session && session.role==="admin"; }
+
+  /* DOM */
+  const loginOverlay = $("loginOverlay");
+  const loginUser = $("loginUser");
+  const loginPw = $("loginPw");
+  const loginBtn = $("loginBtn");
+  const app = document.querySelector(".app");
+
+  const mobileSubtitle = $("mobileSubtitle");
+  const drawerBackdrop = $("drawerBackdrop");
+  const leftDrawer = $("leftDrawer");
+  const rightDrawer = $("rightDrawer");
+  const rightDrawerContent = $("rightDrawerContent");
+
+  const openMenuBtn = $("openMenuBtn");
+  const openQueueBtn = $("openQueueBtn");
+  const closeMenuBtn = $("closeMenuBtn");
+  const closeQueueBtn = $("closeQueueBtn");
+
+  const roleInfoMobile = $("roleInfoMobile");
+  const roleInfoDesktop = $("roleInfo");
+
+  const shiftStartBtn = $("shiftStartBtn");
+  const shiftStartBtnDesktop = $("shiftStartBtnDesktop");
+  const undoBtn = $("undoBtn");
+  const undoBtnDesktop = $("undoBtnDesktop");
+
+  const logoutBtn = $("logoutBtn");
+  const logoutBtnMobile = $("logoutBtnMobile");
+
+  const clockTime = $("clockTime");
+  const clockDate = $("clockDate");
+  const clockTimeDesktop = $("clockTimeDesktop");
+  const clockDateDesktop = $("clockDateDesktop");
+
+  const desktopTabButtons = document.querySelectorAll("#tabs button");
+  const mobileTabButtons = document.querySelectorAll("#mobileTabbar .mTab");
+  const drawerTabButtons = document.querySelectorAll(".drawerTab");
+
+  const rowsInput = $("rowsInput");
+  const colsInput = $("colsInput");
+  const applyGridBtn = $("applyGridBtn");
+  const grid = $("grid");
+
+  const historyList = $("historyList");
+
+  const barTLaden = $("barTLaden");
+  const barTEntladen = $("barTEntladen");
+  const barTBeide = $("barTBeide");
+  const nTLaden = $("nTLaden");
+  const nTEntladen = $("nTEntladen");
+  const nTBeide = $("nTBeide");
+
+  const usersHint = $("usersHint");
+  const newUserName = $("newUserName");
+  const newUserPw = $("newUserPw");
+  const newUserRole = $("newUserRole");
+  const addUserBtn = $("addUserBtn");
+  const userList = $("userList");
+
+  const resetDashBtn = $("resetDashBtn");
+
+  const rightbar = $("rightbar");
+
+  /* Drawers */
+  function closeDrawers(){
+    drawerBackdrop.classList.remove("show");
+    leftDrawer.classList.remove("open");
+    rightDrawer.classList.remove("open");
+  }
+  function syncRightDrawer(){
+    rightDrawerContent.innerHTML = rightbar.innerHTML;
+  }
+  function openDrawer(which){
+    drawerBackdrop.classList.add("show");
+    if(which==="left") leftDrawer.classList.add("open");
+    if(which==="right"){
+      syncRightDrawer();
+      rightDrawer.classList.add("open");
+      renderQueue();
+      updateTrafficLight();
+      renderDashboard();
+    }
+  }
+
+  openMenuBtn.addEventListener("click", ()=>openDrawer("left"));
+  openQueueBtn.addEventListener("click", ()=>openDrawer("right"));
+  closeMenuBtn.addEventListener("click", closeDrawers);
+  closeQueueBtn.addEventListener("click", closeDrawers);
+  drawerBackdrop.addEventListener("click", closeDrawers);
+
+  /* Tabs */
+  function setTab(tabId){
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    $(tabId).classList.add("active");
+    desktopTabButtons.forEach(b=>b.classList.toggle("active", b.dataset.tab===tabId));
+    mobileTabButtons.forEach(b=>b.classList.toggle("active", b.dataset.tab===tabId));
+  }
+  desktopTabButtons.forEach(b=>b.addEventListener("click", ()=>setTab(b.dataset.tab)));
+  mobileTabButtons.forEach(b=>b.addEventListener("click", ()=>setTab(b.dataset.tab)));
+  drawerTabButtons.forEach(b=>b.addEventListener("click", ()=>{ setTab(b.dataset.tab); closeDrawers(); }));
+
+  /* Clock */
+  const pad2 = n => String(n).padStart(2,"0");
+  function tickClock(){
+    const d = new Date();
+    const t = `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    const da = `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.${d.getFullYear()}`;
+    clockTime.textContent = t;
+    clockDate.textContent = da;
+    clockTimeDesktop.textContent = t;
+    clockDateDesktop.textContent = da;
+  }
+  tickClock(); setInterval(tickClock, 1000);
+
+  /* History */
+  function pushHistory(entry){
+    history.unshift(entry);
+    if(history.length>150) history = history.slice(0,150);
+    save(KEY_HISTORY, history);
+  }
+  function renderHistory(){
+    historyList.innerHTML = "";
+    if(history.length===0){
+      historyList.innerHTML = `<div class="muted">Noch keine Aktionen.</div>`;
+      return;
+    }
+    history.slice(0,150).forEach(h=>{
+      const div=document.createElement("div");
+      div.className="historyItem";
+      div.innerHTML = `<div><span class="badge">${String(h.kind).toUpperCase()}</span>${h.detail}</div>
+                       <div class="muted">${h.time} · ${h.user}</div>`;
+      historyList.appendChild(div);
+    });
+  }
+  function updateUndoButtons(){
+    const enabled = canEdit() && history.length>0;
+    undoBtn.disabled = !enabled;
+    undoBtnDesktop.disabled = !enabled;
+  }
+
+  /* Totals */
+  function ensureLkw(id){
+    if(!gridState[id]) gridState[id]="frei";
+    if(!lastChange[id]) lastChange[id]=Date.now();
+  }
+  function closeRunningTime(id, at){
+    const cur = gridState[id] || "frei";
+    if(cur==="frei") return;
+    const start = lastChange[id] || at;
+    totals[cur] = (totals[cur]||0) + Math.max(0, at-start);
+  }
+  function computeTotalsIncludingRunning(){
+    const copy = {...totals};
+    const now=Date.now();
+    for(const id of Object.keys(gridState)){
+      const st=gridState[id];
+      if(st==="frei") continue;
+      const start = lastChange[id] || now;
+      copy[st] = (copy[st]||0) + Math.max(0, now-start);
+    }
+    return copy;
+  }
+
+  /* Ampel */
+  function computeAmpelState(){
+    const sum = queue.laden+queue.entladen+queue.beide;
+    if(sum>=thresh.qRed) return "red";
+    if(sum>=thresh.qYellow) return "yellow";
+    return "green";
+  }
+  function trackAmpelTime(newState){
+    if(!dash.startedAt) return;
+    const now = Date.now();
+    if(!dash.lastAmpel.at){
+      dash.lastAmpel = { state:newState, at:now };
+      return;
+    }
+    const prev = dash.lastAmpel.state;
+    dash.ampel[prev] += Math.max(0, now - dash.lastAmpel.at);
+    dash.lastAmpel = { state:newState, at:now };
+  }
+  function updateTrafficLight(){
+    const st = computeAmpelState();
+    const light = $("light");
+    const lightText = $("lightText");
+    const kpiAmpelState = $("kpiAmpelState");
+
+    if(!light || !lightText || !kpiAmpelState) return;
+
+    light.classList.remove("green","yellow","red");
+    light.classList.add(st);
+    if(st==="red") lightText.textContent="🔴 Kritisch – Warteschlange hoch";
+    else if(st==="yellow") lightText.textContent="🟡 Achtung – Warteschlange steigt";
+    else lightText.textContent="🟢 Warteschlange OK";
+    trackAmpelTime(st);
+
+    kpiAmpelState.textContent = st==="green" ? "OK" : (st==="yellow" ? "Achtung" : "Kritisch");
+    kpiAmpelState.style.borderColor = st==="green" ? "var(--frei)" : (st==="yellow" ? "var(--laden)" : "var(--beide)");
+  }
+
+  /* Queue */
+  function renderQueue(){
+    const cL = $("cLaden"), cE = $("cEntladen"), cB = $("cBeide");
+    const sumEl = $("kpiQueueSum"), peakEl = $("kpiQueuePeak");
+    if(cL) cL.textContent = queue.laden;
+    if(cE) cE.textContent = queue.entladen;
+    if(cB) cB.textContent = queue.beide;
+    if(sumEl) sumEl.textContent = String(queue.laden+queue.entladen+queue.beide);
+    if(peakEl) peakEl.textContent = String(dash.queuePeak);
+
+    const ro=!canEdit();
+    ["incE","decE","incL","decL","incB","decB","qYellow","qRed","saveThreshBtn"]
+      .forEach(id=>{ const el=document.querySelectorAll("#"+id); el.forEach(x=>x.disabled=ro); });
+
+    shiftStartBtn.disabled = ro;
+    shiftStartBtnDesktop.disabled = ro;
+  }
+
+  function changeQueue(type, delta){
+    if(!canEdit()) return;
+    queue[type]=Math.max(0, queue[type]+delta);
+    save(KEY_QUEUE, queue);
+
+    const sum = queue.laden+queue.entladen+queue.beide;
+    dash.queuePeak = Math.max(dash.queuePeak, sum);
+
+    pushHistory({kind:"queue", time:nowStr(), user:session.name, detail:`Queue: ${type} ${delta>0?"+":"-"} (Summe ${sum})`});
+    renderQueue();
+    updateTrafficLight();
+    renderHistory();
+    updateUndoButtons();
+    renderDashboard();
+  }
+
+  /* Grid */
+  function setLkwStatus(id, action){
+    if(!canEdit()) return;
+    ensureLkw(id);
+
+    const prev = gridState[id];
+    const now = Date.now();
+    closeRunningTime(id, now);
+
+    let next="frei";
+    if(action==="frei") next="frei";
+    if(action==="laden") next = (prev==="entladen") ? "beide" : "laden";
+    if(action==="entladen") next = (prev==="laden") ? "beide" : "entladen";
+    if(action==="beide") next="beide";
+    if(next===prev) return;
+
+    gridState[id]=next;
+    lastChange[id]=now;
+    save(KEY_STATE, gridState);
+    save(KEY_LAST, lastChange);
+    save(KEY_TOTALS, totals);
+
+    pushHistory({kind:"lkw", time:nowStr(), user:session.name, detail:`${id}: ${prev} → ${next}`});
+    drawGrid();
+    renderStats();
+    renderHistory();
+    updateUndoButtons();
+    renderDashboard();
+  }
+
+  function drawGrid(){
+    grid.innerHTML="";
+    const rows = clampInt(rowsInput.value,1,20);
+    const cols = clampInt(colsInput.value,1,20);
+    const total = rows*cols;
+
+    for(let i=1;i<=total;i++){
+      const id=`LKW ${i}`;
+      ensureLkw(id);
+      const st=gridState[id];
+
+      const wrap=document.createElement("div");
+      wrap.className="lkw";
+
+      const box=document.createElement("div");
+      box.className="lkw-box";
+      box.style.background =
+        (st==="laden") ? "var(--laden)" :
+        (st==="entladen") ? "var(--entladen)" :
+        (st==="beide") ? "var(--beide)" : "var(--frei)";
+
+      const statusTxt =
+        (st==="laden") ? "Laden" :
+        (st==="entladen") ? "Abladen" :
+        (st==="beide") ? "Abladen / Laden" : "Frei";
+
+      box.innerHTML = `<div class="lkw-id">${id}</div><div class="lkw-status">${id} > ${statusTxt}</div>`;
+      box.addEventListener("click", ()=>setLkwStatus(id,"frei"));
+      if(!canEdit()) box.style.cursor="default";
+
+      const btns=document.createElement("div");
+      btns.className="lkw-buttons";
+
+      const bU=document.createElement("button");
+      bU.textContent="⬇"; bU.title="Abladen"; bU.disabled=!canEdit();
+      bU.addEventListener("click",(e)=>{e.stopPropagation(); setLkwStatus(id,"entladen");});
+
+      const bL=document.createElement("button");
+      bL.textContent="📦"; bL.title="Laden"; bL.disabled=!canEdit();
+      bL.addEventListener("click",(e)=>{e.stopPropagation(); setLkwStatus(id,"laden");});
+
+      const bB=document.createElement("button");
+      bB.textContent="🔄"; bB.title="Beides"; bB.disabled=!canEdit();
+      bB.addEventListener("click",(e)=>{e.stopPropagation(); setLkwStatus(id,"beide");});
+
+      btns.appendChild(bU); btns.appendChild(bL); btns.appendChild(bB);
+      wrap.appendChild(box); wrap.appendChild(btns);
+      grid.appendChild(wrap);
+    }
+  }
+
+  function applyLayout(){
+    if(!canEdit()) return;
+    layout.rows = clampInt(rowsInput.value,1,20);
+    layout.cols = clampInt(colsInput.value,1,20);
+    save(KEY_LAYOUT, layout);
+    drawGrid();
+  }
+
+  /* Stats + Dashboard */
+  function renderStats(){
+    const sum = computeTotalsIncludingRunning();
+    $("tLaden").textContent = fmtMs(sum.laden||0);
+    $("tEntladen").textContent = fmtMs(sum.entladen||0);
+    $("tBeide").textContent = fmtMs(sum.beide||0);
+  }
+  function setBar(fillEl, rightEl, text, value, max, minPct=2){
+    const pct = max>0 ? (value/max*100) : 0;
+    const w = Math.max(minPct, pct);
+    fillEl.style.width = w+"%";
+    fillEl.textContent = text;
+    rightEl.textContent = text;
+  }
+  function renderDashboard(){
+    const now = Date.now();
+    let g=dash.ampel.green, y=dash.ampel.yellow, r=dash.ampel.red;
+    if(dash.lastAmpel?.at){
+      const delta = Math.max(0, now-dash.lastAmpel.at);
+      if(dash.lastAmpel.state==="green") g+=delta;
+      if(dash.lastAmpel.state==="yellow") y+=delta;
+      if(dash.lastAmpel.state==="red") r+=delta;
+    }
+    const tg = $("kpiTGreen"), ty = $("kpiTYellow"), tr = $("kpiTRed");
+    if(tg) tg.textContent = fmtMs(g);
+    if(ty) ty.textContent = fmtMs(y);
+    if(tr) tr.textContent = fmtMs(r);
+
+    const t = computeTotalsIncludingRunning();
+    const a=t.laden||0, b=t.entladen||0, c=t.beide||0;
+    const maxT=Math.max(a,b,c,1);
+    setBar(barTLaden, nTLaden, fmtMs(a), a, maxT);
+    setBar(barTEntladen, nTEntladen, fmtMs(b), b, maxT);
+    setBar(barTBeide, nTBeide, fmtMs(c), c, maxT);
+  }
+
+  function saveThresholds(){
+    if(!canEdit()) return;
+    const y = Math.max(0, parseInt($("qYellow")?.value||"0",10)||0);
+    const rRaw = Math.max(0, parseInt($("qRed")?.value||"0",10)||0);
+    const rr = Math.max(y, rRaw);
+    thresh.qYellow=y; thresh.qRed=rr;
+
+    document.querySelectorAll("#qYellow").forEach(el=>el.value=y);
+    document.querySelectorAll("#qRed").forEach(el=>el.value=rr);
+
+    save(KEY_THRESH, thresh);
+    pushHistory({kind:"thresh", time:nowStr(), user:session.name, detail:`Schwellen: Gelb=${y}, Rot=${rr}`});
+    updateTrafficLight();
+    renderHistory();
+    updateUndoButtons();
+    renderDashboard();
+  }
+
+  /* Users */
+  function refreshLoginSelect(){
+    loginUser.innerHTML="";
+    users.forEach(u=>{
+      const o=document.createElement("option");
+      o.value=u.name;
+      o.textContent=`${u.name} (${u.role})`;
+      loginUser.appendChild(o);
+    });
+  }
+  function renderUsers(){
+    const admin=isAdmin();
+    usersHint.textContent = admin ? "Admin kann Benutzer anlegen." : "Nur Admin darf Benutzer verwalten.";
+    [newUserName,newUserPw,newUserRole,addUserBtn].forEach(el=>el.disabled=!admin);
+
+    userList.innerHTML="";
+    users.forEach(u=>{
+      const row=document.createElement("div");
+      row.style.display="flex";
+      row.style.justifyContent="space-between";
+      row.style.alignItems="center";
+      row.style.gap="10px";
+      row.style.padding="8px";
+      row.style.border="1px solid var(--border)";
+      row.style.borderRadius="12px";
+      row.style.background="#fff";
+      row.style.marginBottom="8px";
+      row.innerHTML = `<div><b>${u.name}</b><div class="muted">${u.role}</div></div>`;
+      userList.appendChild(row);
+    });
+  }
+  function addUser(){
+    if(!isAdmin()) return;
+    const name=newUserName.value.trim();
+    const pw=newUserPw.value;
+    const role=newUserRole.value;
+    if(!name||!pw) return alert("Name/Passwort fehlt");
+    if(users.some(u=>u.name===name)) return alert("Benutzer existiert schon");
+    users.push({name,pw,role});
+    save(KEY_USERS, users);
+    newUserName.value=""; newUserPw.value="";
+    refreshLoginSelect();
+    renderUsers();
+  }
+
+  /* Actions */
+  function resetDashboard(){
+    if(!session) return;
+    dash.startedAt = Date.now();
+    dash.queuePeak = queue.laden+queue.entladen+queue.beide;
+    dash.ampel = { green:0, yellow:0, red:0 };
+    dash.lastAmpel = { state: computeAmpelState(), at: Date.now() };
+    renderDashboard();
+    renderQueue();
+    updateTrafficLight();
+  }
+  function shiftStart(){
+    if(!canEdit()) return alert("Schichtstart nur Admin/Disponent.");
+    if(!confirm("Schichtstart?\n- alle LKW frei\n- Zeiten auf 0\n- Dashboard reset\n- Queue bleibt")) return;
+
+    const rows=clampInt(rowsInput.value,1,20);
+    const cols=clampInt(colsInput.value,1,20);
+    const total=rows*cols;
+    const now=Date.now();
+
+    for(let i=1;i<=total;i++){
+      const id=`LKW ${i}`;
+      gridState[id]="frei";
+      lastChange[id]=now;
+    }
+    totals={laden:0, entladen:0, beide:0};
+
+    save(KEY_STATE, gridState);
+    save(KEY_LAST, lastChange);
+    save(KEY_TOTALS, totals);
+
+    pushHistory({kind:"shift", time:nowStr(), user:session.name, detail:"🟧 Schichtstart"});
+    resetDashboard();
+
+    drawGrid();
+    renderStats();
+    renderHistory();
+    updateUndoButtons();
+  }
+  function undo(){
+    alert("Undo als Snapshot-Undo kommt als nächster Schritt (wenn du willst).");
+  }
+
+  /* Event delegation for cloned right drawer buttons */
+  document.addEventListener("click", (e)=>{
+    const t = e.target;
+    if(!t) return;
+    if(t.id==="incE") return changeQueue("entladen", +1);
+    if(t.id==="decE") return changeQueue("entladen", -1);
+    if(t.id==="incL") return changeQueue("laden", +1);
+    if(t.id==="decL") return changeQueue("laden", -1);
+    if(t.id==="incB") return changeQueue("beide", +1);
+    if(t.id==="decB") return changeQueue("beide", -1);
+    if(t.id==="saveThreshBtn") return saveThresholds();
+  });
+
+  /* Right drawer clone on open */
+  function syncRightDrawer(){
+    rightDrawerContent.innerHTML = rightbar.innerHTML;
+  }
+  openQueueBtn.addEventListener("click", ()=>{
+    syncRightDrawer();
+    openDrawer("right");
+  });
+
+  /* Login */
+  function renderEverything(){
+    rowsInput.value = layout.rows;
+    colsInput.value = layout.cols;
+
+    $("qYellow").value = thresh.qYellow;
+    $("qRed").value = thresh.qRed;
+
+    const info = `Angemeldet als: <b>${session.name}</b><br>Rolle: <b>${session.role}</b>`;
+    roleInfoDesktop.innerHTML = info;
+    roleInfoMobile.innerHTML = info;
+    mobileSubtitle.textContent = `${session.name} (${session.role})`;
+
+    dash.queuePeak = Math.max(dash.queuePeak, queue.laden+queue.entladen+queue.beide);
+
+    renderQueue();
+    drawGrid();
+    renderStats();
+    renderUsers();
+    updateTrafficLight();
+    renderDashboard();
+    renderHistory();
+    updateUndoButtons();
+  }
+
+  function doLogin(){
+    const u = users.find(x=>x.name===loginUser.value && x.pw===loginPw.value);
+    if(!u) return alert("Login fehlgeschlagen");
+    session = { name:u.name, role:u.role };
+
+    app.style.display = "grid";
+    loginOverlay.style.display="none";
+
+    dash.startedAt=Date.now();
+    dash.queuePeak=queue.laden+queue.entladen+queue.beide;
+    dash.ampel={green:0,yellow:0,red:0};
+    dash.lastAmpel={ state: computeAmpelState(), at: Date.now() };
+
+    renderEverything();
+  }
+
+  refreshLoginSelect();
+  loginBtn.addEventListener("click", doLogin);
+  loginPw.addEventListener("keydown",(e)=>{ if(e.key==="Enter") doLogin(); });
+
+  /* Buttons */
+  $("logoutBtn").addEventListener("click", ()=>location.reload());
+  $("logoutBtnMobile").addEventListener("click", ()=>location.reload());
+
+  shiftStartBtn.addEventListener("click", shiftStart);
+  shiftStartBtnDesktop.addEventListener("click", shiftStart);
+
+  undoBtn.addEventListener("click", undo);
+  undoBtnDesktop.addEventListener("click", undo);
+
+  applyGridBtn.addEventListener("click", applyLayout);
+  addUserBtn.addEventListener("click", addUser);
+  resetDashBtn.addEventListener("click", resetDashboard);
+
+  /* Live refresh */
+  setInterval(()=>{
+    if(!session) return;
+    renderStats();
+    renderDashboard();
+  }, 1000);
+
+})();
+</script>
+</body>
+</html>
